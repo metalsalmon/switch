@@ -1,5 +1,7 @@
 ﻿using PacketDotNet;
 using SharpPcap;
+using SharpPcap.AirPcap;
+using SharpPcap.LibPcap;
 using SharpPcap.WinPcap;
 using Switch.Model;
 using Switch.View;
@@ -44,15 +46,32 @@ namespace Switch.Presenter
         public void pocuvaj_rozhranie1(Rozhranie rozhranie)
         {
             rozhranie.adapter.OnPacketArrival += new PacketArrivalEventHandler(zachytenie_rozhranie1);
-            rozhranie.adapter.Open(DeviceMode.Promiscuous);
-            rozhranie.adapter.StartCapture();
+            otvor_na_prijimanie((WinPcapDevice)rozhranie.adapter);
         }
 
         public void pocuvaj_rozhranie2(Rozhranie rozhranie)
         {
             rozhranie.adapter.OnPacketArrival += new PacketArrivalEventHandler(zachytenie_rozhranie2);
-            rozhranie.adapter.Open(DeviceMode.Promiscuous);
-            rozhranie.adapter.StartCapture();
+            otvor_na_prijimanie((WinPcapDevice)rozhranie.adapter);
+
+        }
+
+        public void  otvor_na_prijimanie(WinPcapDevice device) {
+            int timeout = 1000;
+
+            if (device is AirPcapDevice)
+            {
+                ((AirPcapDevice)device).Open(OpenFlags.Promiscuous,timeout);
+            }
+            else if (device is WinPcapDevice)
+            {
+                ((WinPcapDevice)device).Open(OpenFlags.Promiscuous | OpenFlags.NoCaptureLocal, timeout);
+            }
+            else if (device is LibPcapLiveDevice)
+            {
+                ((LibPcapLiveDevice)device).Open(DeviceMode.Promiscuous, timeout);
+            }
+            device.StartCapture();
         }
 
         public void zachytenie_rozhranie1(object sender, CaptureEventArgs e)
@@ -84,11 +103,13 @@ namespace Switch.Presenter
                     if (rozhranie == 1)
                     {
                         analyzuj(rozhranie1, 1, eth, paket);
+                        Console.WriteLine("omg");
                     }
 
                     if (rozhranie == 2)
                     {
                         analyzuj(rozhranie2, 2, eth, paket);
+                        Console.WriteLine("kurva");
                     }
                 }
             }
