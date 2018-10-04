@@ -31,6 +31,8 @@
             this.btn_rozhrania = new System.Windows.Forms.Button();
             this.cb_rozhranie1 = new System.Windows.Forms.ComboBox();
             this.cb_rozhranie2 = new System.Windows.Forms.ComboBox();
+            this.btn_statistiky = new System.Windows.Forms.Button();
+            this.btn_reset = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btn_rozhrania
@@ -59,11 +61,33 @@
             this.cb_rozhranie2.Size = new System.Drawing.Size(353, 24);
             this.cb_rozhranie2.TabIndex = 2;
             // 
+            // btn_statistiky
+            // 
+            this.btn_statistiky.Location = new System.Drawing.Point(454, 176);
+            this.btn_statistiky.Name = "btn_statistiky";
+            this.btn_statistiky.Size = new System.Drawing.Size(75, 23);
+            this.btn_statistiky.TabIndex = 3;
+            this.btn_statistiky.Text = "statistiky";
+            this.btn_statistiky.UseVisualStyleBackColor = true;
+            this.btn_statistiky.Click += new System.EventHandler(this.btn_statistiky_Click);
+            // 
+            // btn_reset
+            // 
+            this.btn_reset.Location = new System.Drawing.Point(554, 193);
+            this.btn_reset.Name = "btn_reset";
+            this.btn_reset.Size = new System.Drawing.Size(75, 23);
+            this.btn_reset.TabIndex = 4;
+            this.btn_reset.Text = "reset";
+            this.btn_reset.UseVisualStyleBackColor = true;
+            this.btn_reset.Click += new System.EventHandler(this.btn_reset_Click);
+            // 
             // MainView
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btn_reset);
+            this.Controls.Add(this.btn_statistiky);
             this.Controls.Add(this.cb_rozhranie2);
             this.Controls.Add(this.cb_rozhranie1);
             this.Controls.Add(this.btn_rozhrania);
@@ -78,6 +102,8 @@
         private System.Windows.Forms.Button btn_rozhrania;
         private System.Windows.Forms.ComboBox cb_rozhranie1;
         private System.Windows.Forms.ComboBox cb_rozhranie2;
+        private System.Windows.Forms.Button btn_statistiky;
+        private System.Windows.Forms.Button btn_reset;
     }
 }
 

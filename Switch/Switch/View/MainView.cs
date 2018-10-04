@@ -22,7 +22,6 @@ namespace Switch
         public int adapter1_index { get => cb_rozhranie1.SelectedIndex; set => throw new NotImplementedException(); }
         public string adapter2 { get => cb_rozhranie2.SelectedItem.ToString(); set => cb_rozhranie2.Items.Add(value); }
         public int adapter2_index { get => cb_rozhranie2.SelectedIndex; set => throw new NotImplementedException(); }
-        public int adaptery2_index { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         private Thread vlakno_rozhranie1 = null, vlakno_rozhranie2 = null;
 
@@ -67,6 +66,17 @@ namespace Switch
                 MessageBox.Show("zvol adatper!");
             }
 
+        }
+
+        private void btn_statistiky_Click(object sender, EventArgs e)
+        {
+            presenter.vypis_statistiky(presenter.rozhranie1,1);
+            presenter.vypis_statistiky(presenter.rozhranie2,2);
+        }
+
+        private void btn_reset_Click(object sender, EventArgs e)
+        {
+            presenter.vymaz_statistiky();
         }
 
         private void MainView_FormClosing(object sender, FormClosingEventArgs e)

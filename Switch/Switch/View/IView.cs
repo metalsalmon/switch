@@ -11,6 +11,6 @@ namespace Switch.View
         string adapter1 { get; set; }
         int adapter1_index { get; set; }
         string adapter2 { get; set; }
-        int adaptery2_index { get; set; }
+        int adapter2_index { get; set; }
     }
 }
