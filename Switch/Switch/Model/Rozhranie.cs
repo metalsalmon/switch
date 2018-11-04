@@ -1,13 +1,8 @@
 ﻿using SharpPcap;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Switch.Model
 {
-    class Rozhranie
+    public class Rozhranie
     {
         public ICaptureDevice adapter { get; set; }
         public int cislo_rozhrania { get; set; }
