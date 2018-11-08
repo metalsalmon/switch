@@ -33,7 +33,11 @@ namespace Switch
             zoznam_adapterov = new List<ICaptureDevice>();
             zobraz_sietove_adaptery();
             Dg_CAM.DataSource = CAM_tabulka;
-            
+            dg_statistiky.Rows.Add("rozhranie 1 in", 0, 0, 0, 0, 0, 0);
+            dg_statistiky.Rows.Add("rozhranie 1 out", 0, 0, 0, 0, 0, 0);
+            dg_statistiky.Rows.Add("rozhranie 2 in", 0, 0, 0, 0, 0, 0);
+            dg_statistiky.Rows.Add("rozhranie 2 out", 0, 0, 0, 0, 0, 0);
+
         }
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -72,15 +76,17 @@ namespace Switch
 
         }
 
-        private void btn_statistiky_Click(object sender, EventArgs e)
-        {
-            vypis_statistiky(rozhranie1,1);
-            vypis_statistiky(rozhranie2,2);
-        }
-
         private void btn_reset_Click(object sender, EventArgs e)
         {
-            vymaz_statistiky();
+            lock(this){
+
+            dg_statistiky.Rows.Clear();
+            dg_statistiky.Rows.Add("rozhranie 1 in", 0, 0, 0, 0, 0, 0);
+            dg_statistiky.Rows.Add("rozhranie 1 out", 0, 0, 0, 0, 0, 0);
+            dg_statistiky.Rows.Add("rozhranie 2 in", 0, 0, 0, 0, 0, 0);
+            dg_statistiky.Rows.Add("rozhranie 2 out", 0, 0, 0, 0, 0, 0);
+            }
+
         }
 
         private void MainView_FormClosing(object sender, FormClosingEventArgs e)
@@ -178,25 +184,31 @@ namespace Switch
             }
 
         }
-        public void analyzuj(Rozhranie rozhranie, int cislo_rozhrania, EthernetPacket eth, Packet paket)
+        public void analyzuj(Rozhranie rozhranie, int cislo_rozhrania, EthernetPacket eth, Packet paket)   //2
         {
             bool vloz = true;
             int vystupne_rozhranie = -1;
-            Thread posielanie;
-            Cam_zaznam novy_zaznam = new Cam_zaznam(eth.SourceHwAddress, cislo_rozhrania, timer);
+            Thread posielanie = null;
+            Cam_zaznam novy_zaznam = new Cam_zaznam(eth.SourceHwAddress, cislo_rozhrania, timer);   //2
             statistiky(rozhranie, eth, true);
-        
+
+            lock (this)
+            {
 
             foreach (var zaznam in CAM_tabulka)
             {
-                if (zaznam.MAC.Equals(novy_zaznam.MAC) && zaznam.rozhranie.Equals(novy_zaznam.rozhranie))
+                if (zaznam.MAC.Equals(novy_zaznam.MAC))
                 {
+                    if (zaznam.rozhranie != novy_zaznam.rozhranie)
+                    {
+                        zaznam.rozhranie = novy_zaznam.rozhranie;
+                    }
                     vloz = false;
                     zaznam.timer = timer;
                 }
                 if(zaznam.MAC == eth.DestinationHwAddress)
                 {
-                    vystupne_rozhranie = zaznam.rozhranie;
+                    vystupne_rozhranie = zaznam.rozhranie;  //2
                 }
 
             }
@@ -206,65 +218,63 @@ namespace Switch
                 CAM_tabulka.Add(novy_zaznam);
             }
 
-            switch (vystupne_rozhranie)
+            if(vystupne_rozhranie != cislo_rozhrania)
             {
-                case 1:
-                    posielanie = new Thread(() => preposli(rozhranie1, eth));
-                    break;
-                case 2:
-                    posielanie = new Thread(() => preposli(rozhranie2, eth));
-                    break;
-                default:
-                    if(cislo_rozhrania == 1) posielanie = new Thread(() => preposli(rozhranie2, eth));
-                    else posielanie = new Thread(() => preposli(rozhranie1, eth));
-                    break;
+                switch (vystupne_rozhranie)
+                {
+                    case 1:
+                        posielanie = new Thread(() => preposli(rozhranie1, eth));
+                        break;
+                    case 2:
+                        posielanie = new Thread(() => preposli(rozhranie2, eth));
+                        break;
+                    default:
+                        if(cislo_rozhrania == 1) posielanie = new Thread(() => preposli(rozhranie2, eth));
+                        else posielanie = new Thread(() => preposli(rozhranie1, eth));
+                        break;
+                }
+                posielanie.Start();
             }
-            Console.WriteLine(CAM_tabulka.Count);
-            posielanie.Start();
+            
+            }
         }
 
         public void statistiky(Rozhranie rozhranie, EthernetPacket eth, bool in_nout)
         {
-            //   if(eth.PayloadPacket ==  )
-            if (in_nout)
-            {
-                rozhranie.eth_in++;
+            IPv4Packet ip;
+            int riadok;
 
-                if (eth.Type.ToString().Equals("Arp")) rozhranie.arp_in++;
-                if (eth.Type.ToString().Equals("IpV4"))
-                {
-                    rozhranie.ip_in++;
-                }
-            }
-            else
+            lock (this)
             {
-                rozhranie.eth_out++;
-                if (eth.Type.ToString().Equals("Arp")) rozhranie.arp_out++;
-                if (eth.Type.ToString().Equals("IpV4"))
+
+            if (rozhranie.cislo_rozhrania == 1 && in_nout) riadok = 0;
+            else if (rozhranie.cislo_rozhrania == 1 && !in_nout) riadok = 1;
+            else if (rozhranie.cislo_rozhrania == 2 && in_nout) riadok = 2;
+            else riadok = 3;
+                dg_statistiky[1, riadok].Value = (int)(dg_statistiky[1, riadok].Value) + 1;
+                if (eth.PayloadPacket is ARPPacket) dg_statistiky[2, riadok].Value = (int)(dg_statistiky[2, riadok].Value) + 1;
+                if(eth.PayloadPacket is IPv4Packet)
                 {
-                    rozhranie.ip_out++;
-                }
+                    dg_statistiky[3, riadok].Value = (int)(dg_statistiky[3, riadok].Value) + 1;
+                    ip = (IPv4Packet)eth.PayloadPacket;
+                    if (ip.PayloadPacket is TcpPacket)
+                    {
+                        dg_statistiky[4, riadok].Value = (int)(dg_statistiky[4, riadok].Value) + 1;
+                   //   if (ip.PayloadPacket.PayloadPacket. is ) dg_statistiky[7, 0].Value = (int)(dg_statistiky[7, 0].Value) + 1;
+                    }
+                    if(ip.PayloadPacket is UdpPacket) dg_statistiky[5, riadok].Value = (int)(dg_statistiky[5, riadok].Value) + 1;
+                    if(ip.PayloadPacket is ICMPv4Packet) dg_statistiky[6, riadok].Value = (int)(dg_statistiky[6, riadok].Value) + 1;
+            }
             }
         }
+         
 
         public void preposli(Rozhranie rozhranie, EthernetPacket eth)
         {
-            Console.WriteLine("joooooooooooooooooooooooooooooooooooooooooooj");
             statistiky(rozhranie, eth, false);
             rozhranie.adapter.SendPacket(eth);
             Thread.Sleep(500);
             Thread.CurrentThread.Abort();
-        }
-
-        public void vypis_statistiky(Rozhranie rozhranie, int cislo)
-        {
-            Console.WriteLine("rozhranie " + cislo);
-            Console.WriteLine("ethernet in: " + rozhranie.eth_in);
-            Console.WriteLine("ethernet out: " + rozhranie.eth_out);
-            Console.WriteLine("arp in: " + rozhranie.arp_in);
-            Console.WriteLine("arp out: " + rozhranie.arp_out);
-            Console.WriteLine("IPv4 in: " + rozhranie.ip_in);
-            Console.WriteLine("IPv4 out: " + rozhranie.ip_out);
         }
 
         private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -293,10 +303,31 @@ namespace Switch
             timer = Convert.ToInt32(txt_timer.Value);
         }
 
-        public void vymaz_statistiky()
+        private void btn_reset_MAC_Click(object sender, EventArgs e)
         {
-            rozhranie1.vynuluj_statistiky();
-            rozhranie2.vynuluj_statistiky();
+            lock (this)
+            {
+                foreach (var zaznam in CAM_tabulka.ToList())
+                {
+                    CAM_tabulka.Remove(zaznam);
+                }
+            }
+
+        }
+
+        private void dataGridView1_CellContentClick_1(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void dg_statistiky_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void MainView_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
