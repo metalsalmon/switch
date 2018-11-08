@@ -206,7 +206,8 @@ namespace Switch
                     vloz = false;
                     zaznam.timer = timer;
                 }
-                if(zaznam.MAC == eth.DestinationHwAddress)
+              //      Console.WriteLine(zaznam.MAC + "      " + eth.DestinationHwAddress);
+                if (zaznam.MAC.Equals(eth.DestinationHwAddress))
                 {
                     vystupne_rozhranie = zaznam.rozhranie;  //2
                 }
@@ -215,9 +216,17 @@ namespace Switch
 
             if (vloz)
             {
-                CAM_tabulka.Add(novy_zaznam);
+                    try
+                    {
+                        CAM_tabulka.Add(novy_zaznam);
+                    }
+                    catch (Exception ee)
+                    {
+                        Console.WriteLine("Omg");
+                    }
+                   
             }
-
+            //    Console.WriteLine(vystupne_rozhranie + "      " + cislo_rozhrania);
             if(vystupne_rozhranie != cislo_rozhrania)
             {
                 switch (vystupne_rozhranie)
